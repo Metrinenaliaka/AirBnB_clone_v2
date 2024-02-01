@@ -10,19 +10,20 @@ env.hosts = ['100.25.2.92', '54.172.76.0']
 
 def do_pack():
     '''Packes web_static in tgz format'''
-    n = datetime.now()
-    name = "web_static_{}{}{}{}{}{}.tgz".format(n.year, n.month,
-                                                n.day, n.hour,
-                                                n.minute, n.second)
-    local('mkdir -p versions')
-    local("tar -cvzf versions/{} web_static".format(name))
-    size = os.stat("versions/{}".format(name)).st_size
-    print("web_static packed: versions/{} -> {}".format(name, size))
+    date = datetime.now().strftime("%Y%m%d%H%M%S")
+    file_path = "versions/web_static_{}.tgz".format(date)
+    if os.path.isdir("versions") is False:
+        local(" mkdir versions")
+    local('tar -cvzf ' + file_path + ' web_static')
+    if os.path.exists(file_path):
+        return file_path
+    return None
 
 
 def do_deploy(archive_path):
+    """deploying achive files"""
     if not archive_path:
-        return(False)
+        return False
     name = archive_path.split('/')[1]
     try:
         put(archive_path, '/tmp/')
@@ -37,6 +38,6 @@ def do_deploy(archive_path):
         run("ln -s /data/web_static/releases/{}/ /data/web_static/current"
             .format(name))
         print("New version deployed")
-        return(True)
+        return True
     except BaseException:
-        return(False)
+        return False
