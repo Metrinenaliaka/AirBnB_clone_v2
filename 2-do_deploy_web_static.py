@@ -1,15 +1,18 @@
 #!/usr/bin/python3
-'''packaging and deployement'''
-from fabric.api import local, run, env, put
+"""
+    script that distributes an archive to your web servers
+"""
+import os.path
 from datetime import datetime
-import os
+from fabric.api import *
 
-env.user = 'ubuntu'
 env.hosts = ['100.25.2.92', '54.172.76.0']
+env.user = "ubuntu"
+env.key_filename = "~/.ssh/school"
 
 
 def do_pack():
-    '''Packes web_static in tgz format'''
+    """generationg a tgz file"""
     date = datetime.now().strftime("%Y%m%d%H%M%S")
     file_path = "versions/web_static_{}.tgz".format(date)
     if os.path.isdir("versions") is False:
@@ -21,23 +24,21 @@ def do_pack():
 
 
 def do_deploy(archive_path):
-    """deploying achive files"""
-    if not archive_path:
+    """distributes an archive to your web servers"""
+    if os.path.exists(archive_path) is False:
         return False
-    name = archive_path.split('/')[1]
-    try:
-        put(archive_path, '/tmp/')
-        run("mkdir -p /data/web_static/releases/{}".format(name))
-        run("tar -xzf /tmp/{} -C /data/web_static/releases/{}"
-            .format(name, name))
-        run("rm /tmp/{}".format(name))
-        run("mv /data/web_static/releases/{}/web_static/*\
-        /data/web_static/releases/{}".format(name, name))
-        run("rm -rf /data/web_static/releases/{}/web_static".format(name))
-        run("rm -rf /data/web_static/current")
-        run("ln -s /data/web_static/releases/{}/ /data/web_static/current"
-            .format(name))
-        print("New version deployed")
-        return True
-    except BaseException:
-        return False
+    archive_name = archive_path.split('/')[1]
+    arch_mod = archive_name.split(".")[0]
+    remote_path = "/data/web_static/releases/" + arch_mod
+    upload_path = '/tmp/' + archive_name
+    put(archive_path, '/tmp/')
+    # put(archive_path, upload_path)
+    sudo('mkdir -p ' + remote_path)
+    sudo('tar -xzf /tmp/{} -C {}/'.format(archive_name, remote_path))
+    sudo('rm {}'.format(upload_path))
+    mv = 'mv ' + remote_path + '/web_static/* ' + remote_path + '/'
+    sudo(mv)
+    sudo('rm -rf ' + remote_path + '/web_static')
+    sudo('rm -rf /data/web_static/current')
+    sudo('ln -s ' + remote_path + ' /data/web_static/current')
+    return True
