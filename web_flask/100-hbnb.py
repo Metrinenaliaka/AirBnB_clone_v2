@@ -28,6 +28,8 @@ def display_filters():
     return render_template('10-hbnb_filters.html',
                            storage=storage.all('State'),
                            amenity=storage.all('Amenity'))
+
+
 @app.route('/hbnb')
 def display_hbnb():
     return render_template('100-hbnb.html',
@@ -35,6 +37,8 @@ def display_hbnb():
                            amenity=storage.all('Amenity'),
                            place=storage.all('Place'),
                            user=storage.all('User'))
+
+
 @app.teardown_appcontext
 def close(exception):
     storage.close()
